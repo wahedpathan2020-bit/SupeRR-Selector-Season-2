@@ -1,0 +1,289 @@
+
+=== PAGE 1 ===
+Who Delivers When It Matters?
+ SupeRR Selector Season 2 · Round 1 · Methodology Report
+1. Final rankings
+Top 10 batters under pressure
+#
+Player
+Pressure balls
+Impact
+(win-pts/100 balls)
+Resilience
+Consistency
+SR hp / usual
+1
+Jos Buttler
+309
++9.4
++3.28
+60%
+184 / 153
+2
+Tim David
+258
++9.5
++2.06
+64%
+179 / 179
+3
+David Miller
+227
++5.1
++3.35
+59%
+153 / 146
+4
+Glenn Maxwell
+159
++5.4
++4.56
+45%
+161 / 161
+5
+Heinrich Klaasen
+231
++8.1
++0.44
+65%
+179 / 165
+6
+Phil Salt
+178
++6.7
++0.87
+66%
+196 / 168
+7
+Daryl Mitchell
+138
++5.4
++0.82
+72%
+188 / 142
+8
+Cameron Green
+220
++6.1
++1.33
+59%
+170 / 150
+9
+Mohammad Rizwan
+201
++4.9
++0.73
+62%
+139 / 125
+10
+Rinku Singh
+203
++3.7
++2.26
+54%
+141 / 153
+Top 10 bowlers under pressure
+#
+Player
+Pressure balls
+Impact
+(win-pts/100 balls)
+Resilience
+Consistency
+Econ hp / usual
+1
+Axar Patel
+441
++8.4
++2.24
+68%
+7.98 / 7.97
+2
+Sunil Narine
+301
++7.2
++1.06
+68%
+7.25 / 6.90
+3
+Krunal Pandya
+226
++7.2
++1.01
+67%
+7.04 / 8.16
+4
+Kuldeep Yadav
+298
++7.9
++0.54
+62%
+7.11 / 8.19
+5
+Bhuvneshwar Kumar
+288
++5.3
++2.75
+56%
+9.64 / 8.34
+6
+Ravindra Jadeja
+242
++5.3
++0.77
+71%
+7.60 / 8.06
+7
+Josh Hazlewood
+210
++5.6
++1.75
+56%
+8.72 / 8.55
+8
+Moeen Ali
+127
++4.3
++0.61
+72%
+7.06 / 8.67
+9
+Taskin Ahmed
+144
++4.4
++1.04
+68%
+6.78 / 8.56
+10
+Ravichandran Ashwin
+268
++4.7
++0.83
+67%
+7.97 / 7.88
+Impact = opponent-adjusted win-probability added per 100 pressure deliveries (shrunk). Resilience = z-score of how much of the available
+win-probability swing the player captures under pressure relative to ordinary situations. Consistency = shrunk share of pressure innings/spells with
+non-negative impact. Pressure balls = deliveries faced (batters) or bowled (bowlers) in high-pressure states.
+2. How pressure is defined
+Pressure is not one stat (required rate, wickets, balls left) but the amount the match is on the line on that ball, which
+those factors jointly determine. I built it in three steps:
+(a) Win-probability model. For every delivery in 766 completed IPL and T20I matches (2022 onward; no-results, ties,
+rain-revised and Emerging/A-team games excluded) I trained separate gradient-boosting models for innings 1 and 2. Inputs
+are balls left, wickets lost, runs, current rate, league (IPL/T20I) and, in chases, runs needed, required rate and the gap
+between required and current rate. Predictions are strictly out-of-fold (5 folds by match), so no match is scored by a model
+that saw it. Chase AUC is 0.89 and calibration is close to the diagonal (Figure 1); the innings-1 model is weaker (AUC 0.67),
+as expected without team strength.
+
+=== PAGE 2 ===
+(b) Leverage. For each ball I compute the expected absolute change in win probability over the possible outcomes (wicket,
+0, 1, 2, 3, 4, 6, wide), weighted by their frequency in that phase of the innings. Leverage is high when the contest is tight and
+few balls remain (a chase needing 12 off 6, or 3 down in the death) and low when the game is effectively decided.
+(c) High-pressure flag. A delivery is "high pressure" when leverage is in the top quartile (≥2.47 win-pts per ball), the contest
+is still live (win probability 20-80%), and at least 3 overs have been bowled (this removes an early-innings model artefact).
+This gives 28,264 deliveries (60% in chases) spread across 758 of 766 matches. "Low pressure" is the bottom half by
+leverage and serves as each player's own baseline.
+Does it separate pressure from ordinary play? Yes: mean absolute win-probability swing per ball is about 3x higher in the
+flagged balls (Figure 1, right), and the flagged states are tighter and later. Scoring rate and wicket rate differ only modestly
+between the two groups, which is why a pure strike-rate view of "pressure" misses much of what matters.
+Figure 1. Leverage profile by over, chase win-probability calibration, and pressure vs ordinary swing.
+
+=== PAGE 3 ===
+3. How performance is measured
+Batting and bowling use the same currency, win probability added (WPA): the change in the batting side's win probability
+on each ball, credited to the batter and debited from the bowler. Because the model is calibrated, an average player earns
+about zero, so WPA already reads as "better than average in this exact situation" and automatically credits a dot ball at 14
+an over more than one in a dead game. Non-striker run-outs and run-outs are excluded from the affected player's sample;
+wides count against the bowler only.
+Three components per player (all computed on high-pressure deliveries unless stated):
+Impact (50%) - opponent-adjusted WPA per 100 pressure deliveries. A joint ridge regression puts every batter and bowler in
+one model (batter +, bowler -), so a batter is credited for beating good bowlers and a bowler for tough batters. The ridge
+penalty (α chosen by match-grouped cross-validation) is a built-in empirical-Bayes shrinkage: 8 great balls cannot outrank
+300 very good ones.
+Resilience (25%) - the player's own baseline test. For each player I estimate the share of the available win-probability swing
+(leverage) captured under pressure and in low-pressure play, each shrunk by ridge, and take the difference. It rewards
+players whose output holds or rises when the game tightens, not just players who are good all the time.
+Consistency (25%) - the Beta-shrunk percentage of a player's pressure innings/spells (at least 4 pressure deliveries) in
+which they added, rather than lost, win probability. This penalises one heroic knock surrounded by failures.
+Composite = 0.5·z(Impact) + 0.25·z(Resilience) + 0.25·z(Consistency), z-scored among eligible players, separately for
+batters and bowlers.
+4. Fair comparisons
+Eligibility: at least 80 high-pressure deliveries, 12 matches with a pressure delivery and 8 qualifying pressure innings/spells
+(105 batters and 111 bowlers qualify). Sample size: ridge shrinkage plus Beta shrinkage on consistency, with bootstrap
+uncertainty reported below. IPL vs T20I: the win-probability model has a league term so a given state is judged against its
+own league's scoring; the joint adjustment credits players for the quality of opponents faced, which partly bridges IPL and
+T20I because many players appear in both. Players with all of their data in one competition are flagged in the appendix (IPL
+share of pressure balls) and carry more transfer risk. Match context: states, not labels, drive pressure, so a final and a
+league game are judged by the same definition.
+5. Evidence for the top 10
+Figure 2. Batters: component contributions and bootstrap stability.
+
+=== PAGE 4 ===
+Figure 3. Bowlers: component contributions and bootstrap stability.
+
+=== PAGE 5 ===
+Figure 4. Top-10 players against their own usual levels. Batters above the dashed line score faster in pressure than otherwise; bowlers below the line
+concede fewer runs.
+Player evidence
+1. Jos Buttler - 309 pressure balls at SR 184 (usual 153), dismissed every 28 balls; positive impact in 60% of pressure
+innings.
+2. Tim David - 258 pressure balls at SR 179 (usual 179), dismissed every 18 balls; positive impact in 64% of pressure
+innings.
+3. David Miller - 227 pressure balls at SR 153 (usual 146), dismissed every 38 balls; positive impact in 59% of pressure
+innings.
+4. Glenn Maxwell - 159 pressure balls at SR 161 (usual 161), dismissed every 20 balls; positive impact in 45% of pressure
+innings.
+5. Heinrich Klaasen - 231 pressure balls at SR 179 (usual 165), dismissed every 21 balls; positive impact in 65% of
+pressure innings.
+6. Phil Salt - 178 pressure balls at SR 196 (usual 168), dismissed every 30 balls; positive impact in 66% of pressure
+innings.
+7. Daryl Mitchell - 138 pressure balls at SR 188 (usual 142), dismissed every 69 balls; positive impact in 72% of pressure
+innings.
+8. Cameron Green - 220 pressure balls at SR 170 (usual 150), dismissed every 22 balls; positive impact in 59% of pressure
+innings.
+9. Mohammad Rizwan - 201 pressure balls at SR 139 (usual 125), dismissed every 50 balls; positive impact in 62% of
+pressure innings.
+10. Rinku Singh - 203 pressure balls at SR 141 (usual 153), dismissed every 34 balls; positive impact in 54% of pressure
+innings.
+1. Axar Patel - 436 legal pressure balls at economy 7.98 (usual 7.97), wicket every 26 balls, 33% dots; positive impact in
+68% of spells.
+2. Sunil Narine - 297 legal pressure balls at economy 7.25 (usual 6.90), wicket every 25 balls, 37% dots; positive impact in
+68% of spells.
+3. Krunal Pandya - 225 legal pressure balls at economy 7.04 (usual 8.16), wicket every 16 balls, 29% dots; positive impact
+in 67% of spells.
+4. Kuldeep Yadav - 292 legal pressure balls at economy 7.11 (usual 8.19), wicket every 14 balls, 31% dots; positive impact
+in 62% of spells.
+5. Bhuvneshwar Kumar - 272 legal pressure balls at economy 9.64 (usual 8.34), wicket every 13 balls, 31% dots; positive
+impact in 56% of spells.
+6. Ravindra Jadeja - 240 legal pressure balls at economy 7.60 (usual 8.06), wicket every 35 balls, 33% dots; positive
+impact in 71% of spells.
+7. Josh Hazlewood - 203 legal pressure balls at economy 8.72 (usual 8.55), wicket every 13 balls, 39% dots; positive
+impact in 56% of spells.
+
+=== PAGE 6 ===
+8. Moeen Ali - 125 legal pressure balls at economy 7.06 (usual 8.67), wicket every 12 balls, 35% dots; positive impact in
+72% of spells.
+9. Taskin Ahmed - 139 legal pressure balls at economy 6.78 (usual 8.56), wicket every 16 balls, 38% dots; positive impact
+in 68% of spells.
+10. Ravichandran Ashwin - 259 legal pressure balls at economy 7.97 (usual 7.88), wicket every 27 balls, 28% dots;
+positive impact in 67% of spells.
+6. Reliability and limitations
+Weight sensitivity. Across nine weight schemes (including impact-only, no-consistency and equal weights) the batter top
+10 keeps 8-10 of the same names and the bowler top 10 keeps 7-10; rank correlation with the base scores is at least 0.95.
+Redefining pressure at the top 30% or top 20% of leverage retains 9 of 10 batters and 8 of 10 bowlers.
+Bootstrap. Resampling matches 60 times gives each player's probability of staying in the top 10 (Figures 2-3). The leaders
+(Buttler, Tim David, Klaasen, Salt; Axar, Narine, Krunal) stay in the top 10 in roughly 70-90% of resamples; ranks 8-10 are
+close calls and should be read as a tier rather than a strict order.
+Honest check on persistence. Splitting matches into odd and even halves and correlating each player's ratings gives a
+rank correlation of about 0.17 for batters (n=94) and 0.18 for bowlers (n=105), or roughly 0.3 after Spearman-Brown
+correction. Pressure performance is only partly a stable skill in two-year samples, which is a known property of cricket data.
+The method therefore leans on shrinkage and reports uncertainty instead of hiding it; it is a strong filter, not a crystal ball.
+Other limitations. No team-strength or pitch data, so the innings-1 win-probability model is coarse and chases dominate
+the pressure sample. Batters are credited for bowlers' errors and fielders' catches only through the joint model, not directly.
+Death-over specialists with few overs and players seen mainly in one league have wider uncertainty. Players with fewer than
+80 pressure deliveries are not ranked, so very young or recently capped names may be under-represented (Vaibhav
+Sooryavanshi just misses the batting top 10 at rank 11 despite a small sample).
+7. Reproducibility
+Pipeline: (1) clean to legal-ball states, runs = bat + extras; (2) out-of-fold win-probability models; (3) leverage by
+counterfactual outcomes; (4) high-pressure flag; (5) joint ridge for Impact and Resilience, Beta-shrunk Consistency; (6)
+composite, sensitivity, bootstrap, split-half. All thresholds are listed above; scripts accompany this report and use only the
+supplied data pack.

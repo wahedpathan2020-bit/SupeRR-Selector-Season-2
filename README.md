@@ -1,3 +1,15 @@
+
+# SupeRR Selector - Season 2
+
+## 🚀 Live Demo
+
+[View Live Website](superrselectorseason2.netlify.app)
+
+## 💻 Tech Stack
+- HTML
+- CSS
+- JavaScript
+
 <<<<<<< HEAD
 # 👑 SupeRR Selector Season 2: Rajasthan Royals IPL 2027 Auction War Room
 

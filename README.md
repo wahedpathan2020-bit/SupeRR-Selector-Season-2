@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 👑 SupeRR Selector Season 2: Rajasthan Royals IPL 2027 Auction War Room
 
 > **Author & Lead Analyst:** **Wahed Pathan**  
@@ -102,3 +103,7 @@ In this proprietary dataset, an unexpected trade occurred ahead of **IPL 2026**:
    $$\text{Composite Score} = 0.50 \cdot z(\text{Impact}) + 0.25 \cdot z(\text{Resilience}) + 0.25 \cdot z(\text{Consistency})$$
 5. **Statistical Stability:**
    - 60-fold bootstrap resampling confirms top performers maintain top-tier ranks in 85%+ of samples.
+=======
+# SupeRR-Selector-Season-2
+A quantitative cricket analytics &amp; live IPL 2027 auction war room analyzing 200,999 deliveries across 766 matches using Win Probability Added (WPA), counterfactual leverage, and empirical-Bayes shrinkage to rank the most reliable clutch players. By Wahed Pathan.
+>>>>>>> 37478f027c1da5f02bd414072d2be4b1be24f6e9
